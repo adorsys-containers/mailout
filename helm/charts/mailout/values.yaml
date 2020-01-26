@@ -1,0 +1,66 @@
+---
+timezone: Europe/Berlin
+openshiftServingCert: false
+replicas: 1
+
+image:
+  stream: true
+  name: mailout
+  tag: latest
+  namespace: ~
+  pullPolicy: IfNotPresent
+  pullSecrets: ~
+
+config:
+  auth:
+    username: relay
+    password: ~
+  log:
+    level: ERROR
+    timestamps: true
+  plugins:
+    - auth/flat_file
+    - relay
+    - process_title
+    - smtp_smarthost
+    - header_remove
+  tls:
+    key: /var/run/secrets/serving-cert-secret/tls.key
+    cert: /var/run/secrets/serving-cert-secret/tls.crt
+    ca: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    caBundle: ~
+  me: "localhost.localdomain"
+  smtp:
+    nodes: 1
+  smtp_smarthost:
+    host: aspmx.l.google.com
+    port: 587
+    auth_type: plain
+    auth_user: ~
+    auth_pass: ~
+
+resources:
+  limits:
+    memory: 250Mi
+  requests:
+    memory: 150Mi
+
+livenessProbe:
+  initialDelaySeconds: 3
+  httpGet:
+    path: /
+    port: 80
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+
+persistence:
+  enabled: true
+  size: 1Gi
+
+deploymentAnnotations: {}
+podAnnotations: {}
+serviceAnnotations: {}
+securityContext: {}
+serviceAccountName: ~

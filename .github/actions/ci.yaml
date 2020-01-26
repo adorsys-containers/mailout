@@ -1,0 +1,103 @@
+name: CI
+
+env:
+  DOCKER_IMAGE: adorsys/mailout
+  TAG: latest
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - DOCKER_IMAGE: adorsys/mailout
+            DIR: .
+            TAG: latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - name: docker version
+        run: docker version
+
+      - name: Install dependencies
+        run: |
+          pip3 install wheel docker-squash
+          curl -sL https://github.com/gdraheim/docker-copyedit/archive/v1.2.2036.tar.gz | tar xzf -  --wildcards --strip-components=1 */docker-copyedit.py
+        working-directory: ${{ matrix.env.DIR }}
+
+      - name: docker build
+        env: ${{ matrix.env }}
+        run: docker build --pull -t "${DOCKER_IMAGE}:${TAG}" .
+        working-directory: ${{ matrix.env.DIR }}
+
+      - name: Run tests
+        env: ${{ matrix.env }}
+        run: bash -xe "tests/tests.sh"
+        working-directory: ${{ matrix.env.DIR }}
+
+      - name: shellcheck
+        uses: reviewdog/action-shellcheck@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+          path: "${{ matrix.env.DIR }}"
+          pattern: "*.sh"
+          exclude: "./.git/*"
+
+      - name: Report Image Size
+        env: ${{ matrix.env }}
+        run: |
+          docker images
+          docker history "${DOCKER_IMAGE}:${TAG}"
+
+      - uses: azure/docker-login@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          login-server: contoso.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Publish Image on DockerHub
+        # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
+        if: github.ref == 'refs/heads/master'
+        env: ${{ matrix.env }}
+        run: |
+          docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/adorsys-containers/mailout/${DOCKER_IMAGE}:${TAG}"
+          docker push "${DOCKER_IMAGE}:${TAG}"
+          docker push "docker.pkg.github.com/adorsys-containers/mailout/${DOCKER_IMAGE}:${TAG}"
+
+      - name: Publish Image aliases on DockerHub
+        # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
+        if: github.ref == 'refs/heads/master'
+        env: ${{ matrix.env }}
+        run: |
+          if [ -n "${ALIASES+x}" ]; then
+            for ALIAS in ${ALIASES}; do
+              echo "Pushing tag aliases ${ALIAS}"
+              docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:${ALIAS}"
+              docker push "${DOCKER_IMAGE}:${ALIAS}"
+            done
+          fi
+
+      - name: Publish Image snapshosts on DockerHub
+        # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
+        if: github.ref == 'refs/heads/master'
+        env: ${{ matrix.env }}
+        run: |
+          if [ -n "${SNAPSHOT+x}" ] && [ "$(date +%d)" -eq "1" ]; then
+            echo "Pushing snapshot tag $(date +%Y%m)"
+            docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:$(date +%Y%m)"
+            docker push "${DOCKER_IMAGE}:$(date +%Y%m)"
+          fi

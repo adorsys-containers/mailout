@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "mailout.fullname" . }}-sts
+  labels:
+    {{- include "mailout.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: smtp
+    port: 25
+    protocol: TCP
+    targetPort: smtp
+  selector:
+    {{- include "mailout.matchLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    {{- if .Values.openshiftServingCert }}
+    service.alpha.openshift.io/serving-cert-secret-name: {{ template "mailout.fullname" . }}-tls
+    {{- end }}
+  {{- with .Values.serviceAnnotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ template "mailout.fullname" . }}
+  labels:
+    {{- include "mailout.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: smtp
+    port: 25
+    protocol: TCP
+    targetPort: smtp
+  selector:
+    {{- include "mailout.matchLabels" . | nindent 4 }}

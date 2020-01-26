@@ -1,0 +1,21 @@
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" }}
+  {{- if (not .Values.image.stream) }}
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: {{ template "mailout.fullname" . }}
+  labels:
+    {{- include "mailout.labels" . | nindent 4 }}
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+  - name: latest
+    from:
+      kind: DockerImage
+      name: {{ .Values.image.name }}:{{ .Values.image.tag }}
+    referencePolicy:
+      type: {{ .Values.pullThrough | ternary "Local" "Source" }}
+  {{- end }}
+{{- end }}

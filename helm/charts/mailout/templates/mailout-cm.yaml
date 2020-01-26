@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ template "mailout.fullname" . }}"
+  labels:
+    {{- include "mailout.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mailout
+data:
+  {{- if .Values.config.tls.caBundle }}
+  ca-bundle.trust.crt: |
+    {{- tpl .Values.config.tls.caBundle $ | nindent 4 }}
+  {{- end }}
+  log.ini: |
+    [main]
+    level={{ .Values.config.log.level }}
+    timestamps={{ .Values.config.log.timestamps }}
+    format=default
+  me: {{ .Values.config.me | quote }}
+  plugins: |
+    {{- .Values.config.plugins | join "\n" | nindent 4 }}
+  relay.ini: |
+    [relay]
+    relay=all
+  http.ini: |
+    listen=[::]:80
+    docroot=/opt/app-root/node_modules/Haraka/http/html
+  smtp.ini: |
+    listen=[::0]:25
+    nodes={{ .Values.config.smtp.nodes }}
+    spool_after="0"
+    force_shutdown_timeout="25"
+  header_remove.ini: |
+    headers=Received,Authentication-Results
+  outbound.ini: |
+    received_header=disabled
+  strict_rfc1869: "1"
+  tls.ini: |
+    ca={{ .Values.config.tls.ca }}
+    {{- if .Values.openshiftServingCert }}
+    key={{ .Values.config.tls.key }}
+    cert={{ .Value.config.tls.cert }}
+    {{- end }}
