@@ -42,5 +42,4 @@ certificates inside the container under `/var/run/secrets/serving-cert-secret/`.
 
 | Name | Description | Size |
 | ---- | ----------- | ---- |
-| latest | - | [![](https://img.shields.io/microbadger/image-size/adorsys/mailout.svg?style=flat-square)](https://microbadger.com/images/adorsys/mailout) |
-
+| latest | - | [![](https://images.microbadger.com/badges/image/adorsys/mailout.svg)](https://microbadger.com/images/adorsys/mailout) |
