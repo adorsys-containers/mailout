@@ -1,5 +1,6 @@
-[![](https://img.shields.io/docker/pulls/adorsys/mailout.svg?logo=docker&style=flat-square)](https://hub.docker.com/r/adorsys/mailout)
-[![](https://img.shields.io/docker/stars/adorsys/mailout.svg?logo=docker&style=flat-square)](https://hub.docker.com/r/adorsys/mailout)
+![CI](https://github.com/adorsys-containers/mailout/workflows/CI/badge.svg?branch=master)
+[![](https://img.shields.io/docker/pulls/adorsys/mailout.svg?logo=docker)](https://hub.docker.com/r/adorsys/mailout)
+[![](https://img.shields.io/docker/stars/adorsys/mailout.svg?logo=docker)](https://hub.docker.com/r/adorsys/mailout)
 
 # adorsys/mailout
 

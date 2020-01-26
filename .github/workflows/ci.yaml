@@ -28,6 +28,11 @@ jobs:
         with:
           node-version: '12.x'
 
+      - uses: actions/setup-python@v1
+        if: matrix.env.SQUASH
+        with:
+          node-version: '3.x'
+
       - name: docker info
         run: docker info
 
@@ -58,19 +63,12 @@ jobs:
           pattern: "*.sh"
           exclude: "./.git/*"
 
-      - uses: actions/setup-python@v1
-        if: matrix.env.SQUASH
-        with:
-          node-version: '3.x'
-
       - name: Squash Docker Image
         if: matrix.env.SQUASH
         run: |
           pip3 install wheel docker-squash
-          if [ ! -z ${SQUASH+x} ]; then
-            docker-squash -t "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
-            docker tag "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
-          fi
+          docker-squash -t "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
+          docker tag "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
 
       - name: Report Image Size
         env: ${{ matrix.env }}
@@ -81,7 +79,6 @@ jobs:
       - uses: azure/docker-login@v1
         if: github.ref == 'refs/heads/master'
         with:
-          login-server: contoso.azurecr.io
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
