@@ -76,11 +76,20 @@ jobs:
           docker images
           docker history "${DOCKER_IMAGE}:${TAG}"
 
-      - uses: azure/docker-login@v1
+      - name: Docker Login docker.io
+        uses: azure/docker-login@v1
         if: github.ref == 'refs/heads/master'
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Docker Login docker.pkg.github.com
+        uses: azure/docker-login@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Image on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
