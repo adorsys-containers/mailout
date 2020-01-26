@@ -27,16 +27,12 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - uses: actions/setup-python@v1
-        with:
-          node-version: '3.x'
 
       - name: docker info
         run: docker info
 
       - name: Install dependencies
         run: |
-          pip3 install wheel docker-squash
           npm install -g dockerfilelint
           curl -sL https://github.com/gdraheim/docker-copyedit/archive/v1.2.2036.tar.gz | tar xzf -  --wildcards --strip-components=1 */docker-copyedit.py
         working-directory: ${{ matrix.env.DIR }}
@@ -61,6 +57,20 @@ jobs:
           path: "${{ matrix.env.DIR }}"
           pattern: "*.sh"
           exclude: "./.git/*"
+
+      - uses: actions/setup-python@v1
+        if: matrix.env.SQUASH
+        with:
+          node-version: '3.x'
+
+      - name: Squash Docker Image
+        if: matrix.env.SQUASH
+        run: |
+          pip3 install wheel docker-squash
+          if [ ! -z ${SQUASH+x} ]; then
+            docker-squash -t "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
+            docker tag "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
+          fi
 
       - name: Report Image Size
         env: ${{ matrix.env }}
