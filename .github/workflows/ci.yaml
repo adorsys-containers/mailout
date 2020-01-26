@@ -1,9 +1,5 @@
 name: CI
 
-env:
-  DOCKER_IMAGE: adorsys/mailout
-  TAG: latest
-
 on:
   pull_request:
   push:
@@ -19,8 +15,8 @@ jobs:
       matrix:
         env:
           - DOCKER_IMAGE: adorsys/mailout
-            DIR: .
             TAG: latest
+            DIR: .
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -97,24 +93,30 @@ jobs:
 
       - name: Publish Image aliases on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && matrix.env.ALIASES
         env: ${{ matrix.env }}
         run: |
-          if [ -n "${ALIASES+x}" ]; then
-            for ALIAS in ${ALIASES}; do
-              echo "Pushing tag aliases ${ALIAS}"
-              docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:${ALIAS}"
-              docker push "${DOCKER_IMAGE}:${ALIAS}"
-            done
-          fi
+          for ALIAS in ${ALIASES}; do
+            echo "Pushing tag aliases ${ALIAS}"
+
+            docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:${ALIAS}"
+            docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${ALIAS}"
+
+            docker push "${DOCKER_IMAGE}:${ALIAS}"
+            docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${ALIAS}"
+          done
 
       - name: Publish Image snapshosts on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && matrix.env.SNAPSHOT
         env: ${{ matrix.env }}
         run: |
-          if [ -n "${SNAPSHOT+x}" ] && [ "$(date +%d)" -eq "1" ]; then
+          if [ "$(date +%d)" -eq "1" ]; then
             echo "Pushing snapshot tag $(date +%Y%m)"
+            
             docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:$(date +%Y%m)"
+            docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:$(date +%Y%m)"
+            
             docker push "${DOCKER_IMAGE}:$(date +%Y%m)"
+            docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:$(date +%Y%m)"
           fi
