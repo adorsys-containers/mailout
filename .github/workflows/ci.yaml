@@ -91,9 +91,9 @@ jobs:
         if: github.ref == 'refs/heads/master'
         env: ${{ matrix.env }}
         run: |
-          docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/adorsys-containers/mailout/${DOCKER_IMAGE}:${TAG}"
+          docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${TAG}"
           docker push "${DOCKER_IMAGE}:${TAG}"
-          docker push "docker.pkg.github.com/adorsys-containers/mailout/${DOCKER_IMAGE}:${TAG}"
+          docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${TAG}"
 
       - name: Publish Image aliases on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
