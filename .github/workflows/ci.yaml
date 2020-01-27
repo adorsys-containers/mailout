@@ -63,6 +63,7 @@ jobs:
 
       - name: Squash Docker Image
         if: matrix.env.SQUASH
+        env: ${{ matrix.env }}
         run: |
           pip3 install wheel docker-squash
           docker-squash -t "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
