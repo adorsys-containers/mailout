@@ -1,2 +1,4 @@
+# This file is managed via github.com/adorsys-containers/config
+
 rules:
   latest_tag: off
