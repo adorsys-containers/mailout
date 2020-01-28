@@ -1,0 +1,5 @@
+.github/workflows/ci.yaml:
+  env:
+    - DOCKER_IMAGE: adorsys/mailout
+      TAG: latest
+      DIR: .
