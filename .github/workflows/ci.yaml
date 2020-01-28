@@ -52,9 +52,8 @@ jobs:
       - name: Run tests
         env: ${{ matrix.env }}
         run: |
-          bash -xe "tests/tests.sh"
-          npx dockerfilelint Dockerfile
-        working-directory: ${{ matrix.env.DIR }}
+          bash -xe "${{ matrix.env.DIR }}/tests/tests.sh"
+          npx dockerfilelint < "${{ matrix.env.DIR }}/Dockerfile"
 
       - name: shellcheck
         uses: reviewdog/action-shellcheck@v1
