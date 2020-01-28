@@ -7,6 +7,7 @@ on:
       - master
     paths-ignore:
       - 'README.md'
+      - '.sync.yml'
   schedule:
     - cron: '0 1 * * *'
 
@@ -16,9 +17,10 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - DOCKER_IMAGE: adorsys/mailout
-            TAG: latest
-            DIR: .
+          -
+            DIR: '.'
+            DOCKER_IMAGE: 'adorsys/mailout'
+            TAG: 'latest'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -66,13 +68,14 @@ jobs:
         env: ${{ matrix.env }}
         run: |
           pip3 install wheel docker-squash
+          docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:presquashed"
           docker-squash -t "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
           docker tag "${DOCKER_IMAGE}:squashed" "${DOCKER_IMAGE}:${TAG}"
 
       - name: Report Image Size
         env: ${{ matrix.env }}
         run: |
-          docker images
+          docker images "${DOCKER_IMAGE}"
           docker history "${DOCKER_IMAGE}:${TAG}"
 
       - name: docker login
