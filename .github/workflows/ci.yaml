@@ -53,7 +53,7 @@ jobs:
         env: ${{ matrix.env }}
         run: |
           bash -xe "${{ matrix.env.DIR }}/tests/tests.sh"
-          npx dockerfilelint "${{ matrix.env.DIR }}/Dockerfile"
+          npx dockerfilelint < "${{ matrix.env.DIR }}/Dockerfile"
 
       - name: shellcheck
         uses: reviewdog/action-shellcheck@v1
