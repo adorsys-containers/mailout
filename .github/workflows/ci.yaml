@@ -11,7 +11,7 @@ on:
       - 'README.md'
       - '.sync.yml'
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '30 5 * * *'
 
 jobs:
   build:
