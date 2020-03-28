@@ -62,8 +62,8 @@ jobs:
           bash -xe "${{ matrix.env.DIR }}/tests/tests.sh"
           npx dockerfilelint < "${{ matrix.env.DIR }}/Dockerfile"
 
-          find "${{ matrix.env.DIR }}/" -name '*.sh' -print0 | xargs -0 shellcheck
-          grep -lr '#!/bin/sh' "${{ matrix.env.DIR }}/" | xargs --no-run-if-empty shellcheck
+          bash -c 'shopt -s globstar nullglob; shellcheck **/*.sh'
+          grep -lr --exclude-dir=.\* '#!/bin/sh' "${{ matrix.env.DIR }}/" | xargs --no-run-if-empty shellcheck
 
       - name: Squash Docker Image
         if: matrix.env.SQUASH
