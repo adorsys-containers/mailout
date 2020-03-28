@@ -44,9 +44,16 @@ jobs:
           curl -sL https://github.com/gdraheim/docker-copyedit/archive/v1.2.2036.tar.gz | tar xzf -  --wildcards --strip-components=1 */docker-copyedit.py
         working-directory: ${{ matrix.env.DIR }}
 
+      # Implement some retry here since docker build depends against a lot of external dependencies
       - name: docker build
         env: ${{ matrix.env }}
-        run: docker build --pull -t "${DOCKER_IMAGE}:${TAG}" .
+        run: |
+          n=0
+          until [ $n -ge 5 ]; do
+            docker build --pull -t "${DOCKER_IMAGE}:${TAG}" . && break
+            n=$[$n+1]
+            sleep 60
+          done
         working-directory: ${{ matrix.env.DIR }}
 
       - name: Run tests
@@ -55,14 +62,8 @@ jobs:
           bash -xe "${{ matrix.env.DIR }}/tests/tests.sh"
           npx dockerfilelint < "${{ matrix.env.DIR }}/Dockerfile"
 
-      - name: shellcheck
-        uses: reviewdog/action-shellcheck@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
-          path: "${{ matrix.env.DIR }}"
-          pattern: "*.sh"
-          exclude: "./.git/*"
+          find "${{ matrix.env.DIR }}/" -name '*.sh' -print0 | xargs -0 shellcheck
+          grep -lr '#!/bin/sh' "${{ matrix.env.DIR }}/" | xargs --no-run-if-empty shellcheck
 
       - name: Squash Docker Image
         if: matrix.env.SQUASH
@@ -82,23 +83,22 @@ jobs:
             --highestUserWastedPercent disabled --lowestEfficiency disabled "${DOCKER_IMAGE}:${TAG}"
 
       - name: docker login
-        if: github.ref == 'refs/heads/master'
-        run: |-
-          echo "${REGISTRY_PASSWORD}" | docker login --username "${REGISTRY_USERNAME}" --password-stdin
-          echo "${GITHUB_TOKEN}" | docker login --username '$GITHUB_ACTOR' --password-stdin docker.pkg.github.com
-        env:
-          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Publish Image on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
         if: github.ref == 'refs/heads/master'
         env: ${{ matrix.env }}
         run: |
-          docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${TAG}"
-          docker push "${DOCKER_IMAGE}:${TAG}"
-          docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${TAG}"
+          n=0
+          until [ $n -ge 5 ]; do
+            docker push "${DOCKER_IMAGE}:${TAG}" && break
+            n=$[$n+1]
+            sleep 60
+          done
 
       - name: Publish Image aliases on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
@@ -109,10 +109,13 @@ jobs:
             echo "Pushing tag aliases ${ALIAS}"
 
             docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:${ALIAS}"
-            docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${ALIAS}"
 
-            docker push "${DOCKER_IMAGE}:${ALIAS}"
-            docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:${ALIAS}"
+            n=0
+            until [ $n -ge 5 ]; do
+              docker push "${DOCKER_IMAGE}:${ALIAS}" && break
+              n=$[$n+1]
+              sleep 60
+            done
           done
 
       - name: Publish Image snapshosts on DockerHub
@@ -122,12 +125,15 @@ jobs:
         run: |
           if [ "$(date +%d)" -eq "1" ]; then
             echo "Pushing snapshot tag $(date +%Y%m)"
-            
+
             docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:$(date +%Y%m)"
-            docker tag "${DOCKER_IMAGE}:${TAG}" "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:$(date +%Y%m)"
-            
-            docker push "${DOCKER_IMAGE}:$(date +%Y%m)"
-            docker push "docker.pkg.github.com/${GITHUB_REPOSITORY}/${DOCKER_IMAGE#*/}:$(date +%Y%m)"
+
+            n=0
+            until [ $n -ge 5 ]; do
+              docker push "${DOCKER_IMAGE}:$(date +%Y%m)" && break
+              n=$[$n+1]
+              sleep 60
+            done
           fi
 
       - name: Slack notification if pipeline failed
