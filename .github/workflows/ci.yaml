@@ -48,12 +48,10 @@ jobs:
       - name: docker build
         env: ${{ matrix.env }}
         run: |
-          n=0
-          until [ $n -ge 5 ]; do
-            docker build --pull -t "${DOCKER_IMAGE}:${TAG}" . && break
-            n=$[$n+1]
-            sleep 60
-          done
+          for i in $(seq 1 5); do
+            docker build --pull -t "${DOCKER_IMAGE}:${TAG}" . && s=0 && break || s=$? && sleep 15;
+          done;
+          (exit $s)
         working-directory: ${{ matrix.env.DIR }}
 
       - name: Run tests
@@ -93,12 +91,10 @@ jobs:
         if: github.ref == 'refs/heads/master'
         env: ${{ matrix.env }}
         run: |
-          n=0
-          until [ $n -ge 5 ]; do
-            docker push "${DOCKER_IMAGE}:${TAG}" && break
-            n=$[$n+1]
-            sleep 60
-          done
+          for i in $(seq 1 5); do
+            docker push "${DOCKER_IMAGE}:${TAG}" && s=0 && break || s=$? && sleep 15;
+          done;
+          (exit $s)
 
       - name: Publish Image aliases on DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
@@ -110,12 +106,10 @@ jobs:
 
             docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:${ALIAS}"
 
-            n=0
-            until [ $n -ge 5 ]; do
-              docker push "${DOCKER_IMAGE}:${ALIAS}" && break
-              n=$[$n+1]
-              sleep 60
-            done
+            for i in $(seq 1 5); do
+              docker push "${DOCKER_IMAGE}:${ALIAS}" && s=0 && break || s=$? && sleep 15;
+            done;
+            (exit $s)
           done
 
       - name: Publish Image snapshosts on DockerHub
@@ -128,12 +122,10 @@ jobs:
 
             docker tag "${DOCKER_IMAGE}:${TAG}" "${DOCKER_IMAGE}:$(date +%Y%m)"
 
-            n=0
-            until [ $n -ge 5 ]; do
-              docker push "${DOCKER_IMAGE}:$(date +%Y%m)" && break
-              n=$[$n+1]
-              sleep 60
-            done
+            for i in $(seq 1 5); do
+              docker push "${DOCKER_IMAGE}:$(date +%Y%m)" && s=0 && break || s=$? && sleep 15;
+            done;
+            (exit $s)
           fi
 
       - name: Slack notification if pipeline failed
