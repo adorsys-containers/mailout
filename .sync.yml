@@ -3,3 +3,7 @@
     - DOCKER_IMAGE: adorsys/mailout
       TAG: latest
       DIR: .
+
+.gitignore:
+  paths:
+    - node_modules
