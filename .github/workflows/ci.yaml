@@ -26,10 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+
+      - uses: actions/setup-python@v2
         if: matrix.env.SQUASH
         with:
-          node-version: '3.x'
+          python-version: '3.x'
 
       - name: docker info
         run: docker info
@@ -125,10 +126,11 @@ jobs:
           fi
       
       - name: Slack notification if pipeline failed
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
           author_name: ${{ github.repository }}
+          fields: repo,commit,author,action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
