@@ -78,6 +78,8 @@ jobs:
             --highestUserWastedPercent disabled --lowestEfficiency disabled "${DOCKER_IMAGE}:${TAG}"
 
       - name: docker login
+        # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
+        if: github.ref == 'refs/heads/master'
         uses: azure/docker-login@v1
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
