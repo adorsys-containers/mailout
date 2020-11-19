@@ -1,0 +1,28 @@
+---
+name: Activity trigger
+
+on:
+  push:
+    branches:
+    - master
+  schedule:
+    - cron: '0 1 1 * *'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure git updates
+        run: |
+          git config --global user.name 'adorsys GmbH & Co. KG'
+          git config --global user.email 'adorsysoss@users.noreply.github.com'
+      - name: Do some activity
+        run: |
+          echo "# Avoid This scheduled workflow is disabled because there hasn't been activity in this repository for at least 60 days." > ACTIVITY.md
+          date >> ACTIVITY.md
+      - name: git commit & push
+        run: |
+          git add ACTIVITY.md
+          git commit -m "Activity trigger $(date)"
+          git push
