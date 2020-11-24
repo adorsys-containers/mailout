@@ -32,6 +32,10 @@ jobs:
         with:
           python-version: '3.x'
 
+      - uses: e1himself/goss-installation-action@v1.0.3
+        with:
+          version: 'v0.3.14'
+
       - name: docker info
         run: docker info
 
@@ -77,10 +81,10 @@ jobs:
           docker run --rm -e CI=1 -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest \
             --highestUserWastedPercent disabled --lowestEfficiency disabled "${DOCKER_IMAGE}:${TAG}"
 
-      - name: docker login
+      - name: Login to DockerHub
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
         if: github.ref == 'refs/heads/master'
-        uses: azure/docker-login@v1
+        uses: docker/login-action@v1
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -129,12 +133,11 @@ jobs:
       
       - name: Slack notification if pipeline failed
         # https://github.community/t5/GitHub-Actions/GitHub-Actions-branch-conditional/m-p/29794
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.8.0
         with:
           status: ${{ job.status }}
           author_name: ${{ github.repository }}
           fields: repo,commit,author,action
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: github.ref == 'refs/heads/master' && failure()
