@@ -18,8 +18,13 @@ jobs:
         run: |
           echo "# Avoid This scheduled workflow is disabled because there hasn't been activity in this repository for at least 60 days." > ACTIVITY.md
           date >> ACTIVITY.md
-      - name: git commit & push
+      - name: git commit
         run: |
           git add ACTIVITY.md
           git commit -m "Activity trigger $(date)"
-          git push
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GH_PAT }}
+          branch: ${{ github.ref }}
+
