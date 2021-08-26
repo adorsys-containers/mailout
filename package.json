@@ -3,9 +3,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/adorsys/dockerhub-pipeline-images.git"
+    "url": "https://github.com/adorsys-containers/mailout.git"
   },
   "dependencies": {
-    "Haraka": "^2.8.25"
+    "Haraka": "2.8.27"
   }
 }
