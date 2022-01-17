@@ -2,7 +2,7 @@ FROM adorsys/ci-build:latest AS BUILD
 COPY . .
 RUN bash -c "nvm use && npm ci"
 
-FROM adorsys/node:14-ubi
+FROM adorsys/node:16-ubi
 
 LABEL maintainer="adorsys GmbH & Co. KG" \
       vendor="adorsys GmbH & Co. KG" \
