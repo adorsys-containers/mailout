@@ -1,6 +1,8 @@
 FROM adorsys/ci-build:latest AS BUILD
+USER 0
 ENV npm_config_python=/usr/bin/python2
-RUN sudo microdnf install python2
+RUN microdnf install python2
+USER default
 COPY . .
 RUN bash -c "nvm use && npm ci"
 
